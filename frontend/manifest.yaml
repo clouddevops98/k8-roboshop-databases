@@ -99,9 +99,6 @@ spec:
       - name: frontend
         image: somayya98/frontend:v1
         imagePullPolicy: Always
-        envFrom:
-        - configMapRef:
-            name: frontend
         ports:
         - name: liveness-port
           containerPort: 8080
@@ -124,6 +121,14 @@ spec:
             port: liveness-port
           failureThreshold: 1
           periodSeconds: 15
+        volumeMounts:
+          - name: nginx-config
+            mountPath: /etc/nginx/nginx.conf
+            subPath: nginx.conf
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: frontend
 ---
 apiVersion: v1
 kind: Service
@@ -131,13 +136,14 @@ metadata:
   name: frontend
   namespace: roboshop
 spec:
+  type: LoadBalancer
   selector:
     project: roboshop
     component: frontend
     tier: frontend
   ports:
     - protocol: TCP
-      port: 8080 # service port
+      port: 80 # service port
       targetPort: 8080 # container port
 ---
 apiVersion: autoscaling/v2
